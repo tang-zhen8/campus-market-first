@@ -16,6 +16,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/empty_message"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
         android:visibility="gone" />
 </FrameLayout>

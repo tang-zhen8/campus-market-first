@@ -21,8 +21,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:drawablePadding="12dp"
+            android:gravity="center"
             android:text="@string/empty_market"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
             android:visibility="gone" />
     </FrameLayout>
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
