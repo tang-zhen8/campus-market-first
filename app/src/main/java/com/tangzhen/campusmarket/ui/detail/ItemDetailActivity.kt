@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.tangzhen.campusmarket.R
 import com.tangzhen.campusmarket.data.MarketRepository
 import com.tangzhen.campusmarket.databinding.ActivityItemDetailBinding
@@ -70,6 +71,15 @@ class ItemDetailActivity : AppCompatActivity() {
         binding.tvSeller.text = "卖家：${item.sellerName}"
         binding.tvTime.text = "发布时间：${item.publishTime}"
         binding.tvDescription.text = item.description
+
+        // 强制技术点「图片处理」：云端商品用 Glide 发起网络请求加载大图，
+        // 并复用列表页已缓存的图片（同一 URL 不会重复下载）
+        Glide.with(this)
+            .load(item.imageUrl.ifEmpty { null })
+            .placeholder(R.drawable.bg_image_placeholder)
+            .error(R.drawable.bg_image_placeholder)
+            .centerCrop()
+            .into(binding.ivImage)
 
         updateFavoriteButton(item.isFavorited)
         updateStarButton(item.isStarred)

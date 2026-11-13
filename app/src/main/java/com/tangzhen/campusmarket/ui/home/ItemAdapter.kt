@@ -5,6 +5,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.tangzhen.campusmarket.R
 import com.tangzhen.campusmarket.databinding.ItemProductBinding
 import com.tangzhen.campusmarket.model.Item
 import java.util.Locale
@@ -47,6 +49,17 @@ class ItemAdapter(
             binding.ivFavorite.visibility = if (item.isFavorited) android.view.View.VISIBLE else android.view.View.INVISIBLE
             // 创新点一：盯盘图标
             binding.ivStar.visibility = if (item.isStarred) android.view.View.VISIBLE else android.view.View.INVISIBLE
+
+            // 强制技术点「图片处理 + 网络」：
+            // 云端商品的图片通过 Glide 发起 HTTP 请求下载，
+            // 自带磁盘/内存缓存，滑动列表时不重复请求
+            Glide.with(binding.ivThumb)
+                .load(item.imageUrl.ifEmpty { null })
+                .placeholder(R.drawable.bg_image_placeholder)
+                .error(R.drawable.bg_image_placeholder)
+                .centerCrop()
+                .into(binding.ivThumb)
+
             binding.root.setOnClickListener { onItemClick(item) }
         }
     }
