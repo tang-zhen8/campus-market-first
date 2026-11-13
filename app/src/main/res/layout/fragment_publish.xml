@@ -12,6 +12,41 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- 创新点三：一键快捷发布 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnQuickPublish"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingVertical="16dp"
+            android:text="@string/quick_publish"
+            android:textSize="16sp"
+            app:cornerRadius="18dp"
+            app:icon="@drawable/ic_pin"
+            app:iconGravity="textStart" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="@string/quick_publish_hint"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="完整发布（可填分类和描述）"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilTitle"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"

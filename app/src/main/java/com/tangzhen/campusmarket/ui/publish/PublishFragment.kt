@@ -26,6 +26,11 @@ class PublishFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        // 创新点三：一键快捷发布（底部弹窗）
+        binding.btnQuickPublish.setOnClickListener {
+            QuickPublishSheet().show(parentFragmentManager, "quick_publish")
+        }
+
         // 分类下拉框
         val adapter = ArrayAdapter(
             requireContext(),
