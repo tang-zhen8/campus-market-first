@@ -27,9 +27,9 @@
 
     <!-- 桌面盯盘小组件（创新点一） -->
     <string name="widget_header">⭐ 桌面盯盘 · 校园二手</string>
-    <string name="widget_empty">暂无盯盘商品，去 App 设为盯盘吧</string>
-    <string name="widget_hint">点击打开 App</string>
-    <string name="widget_description">实时展示你盯盘中的二手商品</string>
+    <string name="widget_empty">暂无盯盘商品，去详情页点「盯盘到桌面」</string>
+    <string name="widget_hint"></string>
+    <string name="widget_description">实时展示你盯盘中的二手商品（最多 3 件，最近盯盘的排最前）</string>
     <string name="star">盯盘</string>
 
     <!-- 快捷发布（创新点三） -->

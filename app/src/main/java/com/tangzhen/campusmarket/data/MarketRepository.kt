@@ -76,8 +76,18 @@ object MarketRepository {
     private val _items = MutableLiveData<List<Item>>()
     val items: LiveData<List<Item>> = _items
 
+    /**
+     * 数据变更回调（供桌面小组件联动）
+     *
+     * 只要仓库内任何数据发生变化（发布 / 收藏 / 留言 / 盯盘），
+     * 都会回调这里，由 MainActivity 注册后把最新盯盘快照推送到桌面小组件，
+     * 避免"小组件内容停留在旧数据"的问题。
+     */
+    var onDataChanged: (() -> Unit)? = null
+
     private fun notifyChanged() {
         _items.value = itemList.toList()
+        onDataChanged?.invoke()
     }
 
     /** 首页：全部商品（倒序，最新发布在前） */
@@ -126,12 +136,18 @@ object MarketRepository {
     fun toggleStar(itemId: Long): Boolean? {
         val item = getItemById(itemId) ?: return null
         item.isStarred = !item.isStarred
+        // 记录盯盘时间：最近盯盘的排在小组件最前面
+        item.starredAt = if (item.isStarred) System.currentTimeMillis() else 0L
         notifyChanged()
         return item.isStarred
     }
 
-    /** 最近一个盯盘中的商品（供桌面小组件读取） */
-    fun getLatestStarred(): Item? = itemList.filter { it.isStarred }.maxByOrNull { it.publishTime }
+    /** 所有盯盘商品，按"最近盯盘"倒序（桌面小组件按此顺序展示） */
+    fun getStarredItems(): List<Item> =
+        itemList.filter { it.isStarred }.sortedByDescending { it.starredAt }
+
+    /** 最近一个盯盘中的商品 */
+    fun getLatestStarred(): Item? = getStarredItems().firstOrNull()
 
     /** 消息页：把别人在我发布的商品下的留言汇总为消息 */
     fun getCommentMessages(): List<Comment> =

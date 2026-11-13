@@ -5,6 +5,7 @@ package com.tangzhen.campusmarket.model
  * 对应校园二手交易（无支付）场景：仅展示与沟通，不涉及支付
  *
  * isStarred  : 盯盘状态（创新点：桌面小组件实时展示用户最关心的商品）
+ * starredAt  : 盯盘时间戳，用于"最近盯盘的排最前"，避免按发布时间排序导致小组件内容锁死
  * trustTags  : 校园信任标签（创新点：区别于社会平台的熟人信任机制）
  */
 data class Item(
@@ -17,6 +18,7 @@ data class Item(
     val publishTime: String,
     var isFavorited: Boolean = false,
     var isStarred: Boolean = false,
+    var starredAt: Long = 0L,
     val trustTags: List<String> = listOf("本校学生认证"),
     val comments: MutableList<Comment> = mutableListOf()
 )

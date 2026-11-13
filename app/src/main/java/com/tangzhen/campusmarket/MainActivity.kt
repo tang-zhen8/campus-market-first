@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.view.Menu
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import com.tangzhen.campusmarket.data.MarketRepository
 import com.tangzhen.campusmarket.databinding.ActivityMainBinding
 import com.tangzhen.campusmarket.ui.home.HomeFragment
 import com.tangzhen.campusmarket.ui.message.MessageFragment
 import com.tangzhen.campusmarket.ui.mine.MineFragment
 import com.tangzhen.campusmarket.ui.publish.PublishFragment
+import com.tangzhen.campusmarket.widget.StarredWidgetProvider
 
 /**
  * 主界面：单 Activity + 底部导航 + 四个 Fragment
@@ -31,6 +33,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
+
+        // 数据一变（发布 / 收藏 / 留言 / 盯盘切换）就把盯盘快照推到桌面小组件，
+        // 保证桌面内容永远跟 App 内状态一致，不会停留在旧数据上
+        MarketRepository.onDataChanged = {
+            StarredWidgetProvider.pushUpdate(applicationContext)
+        }
+        StarredWidgetProvider.refreshAll(applicationContext)
 
         if (savedInstanceState == null) {
             switchTo(HomeFragment(), "首页")

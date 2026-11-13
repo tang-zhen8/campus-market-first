@@ -98,7 +98,7 @@ class ItemDetailActivity : AppCompatActivity() {
 
     /**
      * 创新点一：盯盘（桌面小组件联动）
-     * 状态变化后立即把最新盯盘商品推送到桌面小组件
+     * 状态变化后仓库会回调 MainActivity 注册的监听，把最新盯盘列表推到桌面小组件
      */
     private fun toggleStar() {
         val result = MarketRepository.toggleStar(itemId)
@@ -107,7 +107,6 @@ class ItemDetailActivity : AppCompatActivity() {
         } else if (result == false) {
             Toast.makeText(this, "已取消盯盘", Toast.LENGTH_SHORT).show()
         }
-        com.tangzhen.campusmarket.widget.StarredWidgetProvider.pushUpdate(this)
         render()
     }
 
