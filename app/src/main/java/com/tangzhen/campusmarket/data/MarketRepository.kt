@@ -207,16 +207,19 @@ object MarketRepository {
             return
         }
 
-        ApiClient.marketApi.getProducts(20).enqueue(object : Callback<ProductListResponse> {
+        ApiClient.marketApi.getProducts(100).enqueue(object : Callback<ProductListResponse> {
             override fun onResponse(
                 call: Call<ProductListResponse>,
                 response: Response<ProductListResponse>
             ) {
                 val products = response.body()?.products.orEmpty()
-                if (response.isSuccessful && products.isNotEmpty()) {
-                    ItemCache.save(ctx, products)
-                    replaceRemoteItems(products)
-                    onResult(true, "云端同步成功，已获取 ${products.size} 件商品")
+                val suitable = products
+                    .filter { it.category !in EXCLUDED_CATEGORIES }
+                    .take(60)
+                if (response.isSuccessful && suitable.isNotEmpty()) {
+                    ItemCache.save(ctx, suitable)
+                    replaceRemoteItems(suitable)
+                    onResult(true, "云端同步成功，已获取 ${suitable.size} 件商品")
                 } else {
                     onResult(false, "云端返回异常（${response.code()}），已显示本地缓存")
                 }
@@ -227,6 +230,12 @@ object MarketRepository {
             }
         })
     }
+
+    /**
+     * 不符合校园二手场景的品类，从云端结果中过滤：
+     * 家具（宿舍放不下床/沙发）、整车（摩托/汽车不属于校园交易）
+     */
+    private val EXCLUDED_CATEGORIES = setOf("furniture", "vehicle", "motorcycle")
 
     /** 用云端商品替换列表里的旧云端数据（保留用户对它们的收藏 / 盯盘 / 留言状态） */
     private fun replaceRemoteItems(products: List<ProductDto>) {
