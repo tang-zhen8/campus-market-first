@@ -20,7 +20,11 @@ data class Item(
     var isStarred: Boolean = false,
     var starredAt: Long = 0L,
     val trustTags: List<String> = listOf("本校学生认证"),
-    val comments: MutableList<Comment> = mutableListOf()
+    val comments: MutableList<Comment> = mutableListOf(),
+    /** 网络图片地址（Glide 加载，空表示无图，显示占位图） */
+    val imageUrl: String = "",
+    /** 是否来自云端（true = Retrofit 拉取的网络数据；false = 本机发布/内置数据） */
+    val isFromCloud: Boolean = false
 )
 
 /**

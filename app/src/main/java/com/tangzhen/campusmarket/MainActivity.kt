@@ -34,8 +34,11 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        // 数据一变（发布 / 收藏 / 留言 / 盯盘切换）就把盯盘快照推到桌面小组件，
-        // 保证桌面内容永远跟 App 内状态一致，不会停留在旧数据上
+        // 1. 初始化数据层：先读取云端商品的本地离线缓存（断网也能浏览）
+        MarketRepository.init(applicationContext)
+
+        // 2. 数据一变（发布 / 收藏 / 留言 / 盯盘切换 / 云端同步）就把盯盘快照推到桌面小组件，
+        //    保证桌面内容永远跟 App 内状态一致，不会停留在旧数据上
         MarketRepository.onDataChanged = {
             StarredWidgetProvider.pushUpdate(applicationContext)
         }
