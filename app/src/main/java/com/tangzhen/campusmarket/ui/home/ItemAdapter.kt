@@ -40,9 +40,13 @@ class ItemAdapter(
             binding.tvPrice.text = String.format(Locale.CHINA, "¥%.2f", item.price)
             binding.tvDescription.text = item.description
             binding.tvCategory.text = item.category
+            // 创新点二：校园信任标签
+            binding.tvTrust.text = item.trustTags.joinToString(" · ")
             binding.tvSeller.text = "${item.sellerName} · ${item.publishTime}"
             binding.tvCommentCount.text = "${item.comments.size} 条留言"
             binding.ivFavorite.visibility = if (item.isFavorited) android.view.View.VISIBLE else android.view.View.INVISIBLE
+            // 创新点一：盯盘图标
+            binding.ivStar.visibility = if (item.isStarred) android.view.View.VISIBLE else android.view.View.INVISIBLE
             binding.root.setOnClickListener { onItemClick(item) }
         }
     }

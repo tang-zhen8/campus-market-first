@@ -55,6 +55,7 @@ class ItemDetailActivity : AppCompatActivity() {
         }
 
         binding.btnFavorite.setOnClickListener { toggleFavorite() }
+        binding.btnStar.setOnClickListener { toggleStar() }
 
         MarketRepository.items.observe(this) { render() }
         render()
@@ -65,11 +66,13 @@ class ItemDetailActivity : AppCompatActivity() {
         binding.tvTitle.text = item.title
         binding.tvPrice.text = String.format(Locale.CHINA, "¥%.2f", item.price)
         binding.tvCategory.text = item.category
+        binding.tvTrust.text = item.trustTags.joinToString(" · ")
         binding.tvSeller.text = "卖家：${item.sellerName}"
         binding.tvTime.text = "发布时间：${item.publishTime}"
         binding.tvDescription.text = item.description
 
         updateFavoriteButton(item.isFavorited)
+        updateStarButton(item.isStarred)
 
         commentAdapter.submitList(item.comments.toList())
         binding.tvCommentHeader.text = "留言（${item.comments.size}）"
@@ -91,5 +94,27 @@ class ItemDetailActivity : AppCompatActivity() {
         } else if (result == false) {
             Toast.makeText(this, "已取消收藏", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    /**
+     * 创新点一：盯盘（桌面小组件联动）
+     * 状态变化后立即把最新盯盘商品推送到桌面小组件
+     */
+    private fun toggleStar() {
+        val result = MarketRepository.toggleStar(itemId)
+        if (result == true) {
+            Toast.makeText(this, "已设为盯盘，去桌面看小组件吧", Toast.LENGTH_LONG).show()
+        } else if (result == false) {
+            Toast.makeText(this, "已取消盯盘", Toast.LENGTH_SHORT).show()
+        }
+        com.tangzhen.campusmarket.widget.StarredWidgetProvider.pushUpdate(this)
+        render()
+    }
+
+    private fun updateStarButton(starred: Boolean) {
+        binding.btnStar.text = if (starred) "📌 盯盘中 · 已钉在桌面" else "📌 盯盘到桌面"
+        binding.btnStar.setIconResource(
+            if (starred) R.drawable.ic_star_filled else R.drawable.ic_pin
+        )
     }
 }

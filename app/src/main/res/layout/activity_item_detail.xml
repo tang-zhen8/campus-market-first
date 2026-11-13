@@ -79,6 +79,18 @@
                     android:textSize="13sp" />
             </LinearLayout>
 
+            <!-- 创新点二：校园信任标签 -->
+            <TextView
+                android:id="@+id/tvTrust"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_tag_green"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/trust_text"
+                android:textSize="12sp" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -97,11 +109,21 @@
                 android:textColor="@color/text_primary" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnFavorite"
+                android:id="@+id/btnStar"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
+                android:text="@string/star"
+                app:cornerRadius="24dp"
+                app:icon="@drawable/ic_pin" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFavorite"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="@string/favorite"
                 app:cornerRadius="24dp" />
 

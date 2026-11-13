@@ -22,4 +22,11 @@
     <color name="star">#F0B24A</color>
     <color name="tag_bg">#E4F1FB</color>
     <color name="tag_text">#3E7EA8</color>
+
+    <!-- 校园信任标签（创新点二） -->
+    <color name="trust_bg">#E6F4EA</color>
+    <color name="trust_text">#2E7D46</color>
+
+    <!-- 盯盘图标色 -->
+    <color name="pin">#4C89BE</color>
 </resources>

@@ -24,4 +24,24 @@
     <string name="hint_comment">友善留言…</string>
     <string name="send">发送</string>
     <string name="favorite">收藏</string>
+
+    <!-- 桌面盯盘小组件（创新点一） -->
+    <string name="widget_header">⭐ 桌面盯盘 · 校园二手</string>
+    <string name="widget_empty">暂无盯盘商品，去 App 设为盯盘吧</string>
+    <string name="widget_hint">点击打开 App</string>
+    <string name="widget_description">实时展示你盯盘中的二手商品</string>
+    <string name="star">盯盘</string>
+
+    <!-- 快捷发布（创新点三） -->
+    <string name="quick_publish">⚡ 一键快捷发布</string>
+    <string name="quick_publish_hint">只需 2 步，3 秒上架</string>
+    <string name="quick_hint_title">卖什么？</string>
+    <string name="quick_hint_price">多少钱？</string>
+    <string name="quick_submit">3 秒上架</string>
+    <string name="quick_full_form">想写详细描述？用下面的完整表单 ↓</string>
+    <string name="quick_word_math">高数书 ¥15</string>
+    <string name="quick_word_bike">自行车 ¥150</string>
+    <string name="quick_word_lamp">台灯 ¥59</string>
+    <string name="quick_word_racket">羽毛球拍 ¥45</string>
+    <string name="quick_word_keyboard">机械键盘 ¥89</string>
 </resources>

@@ -25,37 +25,44 @@ object MarketRepository {
 
     private fun now(): String = timeFormat.format(Date())
 
-    // 内存数据源：模拟商品列表
+    // 内存数据源：模拟商品列表（trustTags = 校园信任标签创新点）
     private val itemList: MutableList<Item> = mutableListOf(
         Item(
             id = 1, title = "高等数学教材（第七版）上下册",
             price = 15.0, description = "大一上学期用的，笔记不多，九成新，考研的同学也可以参考。",
             category = "教材书籍", sellerName = "李同学", publishTime = "11-03 14:20",
+            trustTags = listOf("本校学生认证", "可送到宿舍楼下"),
         ),
         Item(
             id = 2, title = "小米台灯 Pro（宿舍神器）",
             price = 59.0, description = "用了一年，功能完好，灯珠无损坏，搬宿舍低价出。",
             category = "生活电器", sellerName = "王同学", publishTime = "11-03 20:05",
+            trustTags = listOf("本校学生认证", "支持当面验货"),
         ),
         Item(
             id = 3, title = "蓝牙机械键盘 87键 红轴",
             price = 89.0, description = "编程写作业都很舒服，换了客制化键盘所以出掉。",
             category = "数码产品", sellerName = "张同学", publishTime = "11-04 09:12",
+            isStarred = true,  // 预置盯盘数据，方便演示桌面小组件
+            trustTags = listOf("本校学生认证", "同栋宿舍楼"),
         ),
         Item(
             id = 4, title = "羽毛球拍 尤尼克斯入门款",
             price = 45.0, description = "体育课结束后用不上了，送手胶和拍套。",
             category = "运动器材", sellerName = "刘同学", publishTime = "11-04 18:40",
+            trustTags = listOf("本校学生认证", "支持当面验货"),
         ),
         Item(
             id = 5, title = "CET-4/6 真题试卷一套（含解析）",
             price = 10.0, description = "只写了前两套，几乎全新，附赠答题卡。",
             category = "教材书籍", sellerName = "陈同学", publishTime = "11-05 08:30",
+            trustTags = listOf("本校学生认证", "可送到宿舍楼下"),
         ),
         Item(
             id = 6, title = "自行车 变速通勤款",
             price = 150.0, description = "毕业学长留下的，刹车已检修，校内代步首选。",
             category = "其他", sellerName = "赵同学", publishTime = "11-05 12:00",
+            trustTags = listOf("本校学生认证", "同栋宿舍楼", "支持当面验货"),
         ),
     )
 
@@ -114,6 +121,17 @@ object MarketRepository {
         notifyChanged()
         return true
     }
+
+    /** 盯盘（创新点：桌面小组件实时展示） */
+    fun toggleStar(itemId: Long): Boolean? {
+        val item = getItemById(itemId) ?: return null
+        item.isStarred = !item.isStarred
+        notifyChanged()
+        return item.isStarred
+    }
+
+    /** 最近一个盯盘中的商品（供桌面小组件读取） */
+    fun getLatestStarred(): Item? = itemList.filter { it.isStarred }.maxByOrNull { it.publishTime }
 
     /** 消息页：把别人在我发布的商品下的留言汇总为消息 */
     fun getCommentMessages(): List<Comment> =

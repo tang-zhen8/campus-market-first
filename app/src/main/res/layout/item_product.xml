@@ -41,6 +41,15 @@
                 android:contentDescription="@string/favorite"
                 android:src="@drawable/ic_star_filled"
                 app:tint="@color/star" />
+
+            <ImageView
+                android:id="@+id/ivStar"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="6dp"
+                android:contentDescription="@string/star"
+                android:src="@drawable/ic_pin"
+                app:tint="@color/pin" />
         </LinearLayout>
 
         <TextView
@@ -78,6 +87,19 @@
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="3dp"
                 android:textColor="@color/tag_text"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvTrust"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_tag_green"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/trust_text"
                 android:textSize="12sp" />
 
             <Space
