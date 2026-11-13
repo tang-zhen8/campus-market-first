@@ -254,19 +254,24 @@ object MarketRepository {
     }
 
     /** DTO -> Item：外部数据结构转换为 App 内部模型（解耦：换接口只改这里） */
-    private fun ProductDto.toItem(): Item = Item(
-        id = REMOTE_ID_BASE + id,
-        title = title,
-        // dummyjson 价格为美元，按 1:7 折算为人民币参考价
-        price = (price * 7).roundToInt().toDouble(),
-        description = description,
-        category = mapCategory(category),
-        sellerName = "☁ 云端 · ${brand ?: "官方自营"}",
-        publishTime = "今日同步",
-        trustTags = listOf("本校学生认证", "云端数据源"),
-        imageUrl = thumbnail ?: images?.firstOrNull() ?: "",
-        isFromCloud = true,
-    )
+    private fun ProductDto.toItem(): Item {
+        val chineseCategory = mapCategory(category)
+        return Item(
+            id = REMOTE_ID_BASE + id,
+            // 列表标题中文化：云端原始英文标题收进详情页，界面保持校园二手的中文语境
+            title = "来自云端的好物 #$id（$chineseCategory）",
+            // dummyjson 价格为美元，按 1:7 折算为人民币参考价
+            price = (price * 7).roundToInt().toDouble(),
+            // 详情页保留云端原文（含品牌），证明数据来自真实网络请求
+            description = "该商品来自云端商品库，以下为数据源原文描述：\n$description",
+            category = chineseCategory,
+            sellerName = "☁ 云端自营",
+            publishTime = "今日同步",
+            trustTags = listOf("本校学生认证", "云端数据源"),
+            imageUrl = thumbnail ?: images?.firstOrNull() ?: "",
+            isFromCloud = true,
+        )
+    }
 
     /** 云端分类映射到本 App 的六个分类 */
     private fun mapCategory(raw: String): String = when (raw) {
