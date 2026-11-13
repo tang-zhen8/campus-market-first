@@ -263,23 +263,53 @@ object MarketRepository {
     }
 
     /** DTO -> Item：外部数据结构转换为 App 内部模型（解耦：换接口只改这里） */
-    private fun ProductDto.toItem(): Item {
-        val chineseCategory = mapCategory(category)
-        return Item(
-            id = REMOTE_ID_BASE + id,
-            // 列表标题中文化：云端原始英文标题收进详情页，界面保持校园二手的中文语境
-            title = "来自云端的好物 #$id（$chineseCategory）",
-            // dummyjson 价格为美元，按 1:7 折算为人民币参考价
-            price = (price * 7).roundToInt().toDouble(),
-            // 详情页保留云端原文（含品牌），证明数据来自真实网络请求
-            description = "该商品来自云端商品库，以下为数据源原文描述：\n$description",
-            category = chineseCategory,
-            sellerName = "☁ 云端自营",
-            publishTime = "今日同步",
-            trustTags = listOf("本校学生认证", "云端数据源"),
-            imageUrl = thumbnail ?: images?.firstOrNull() ?: "",
-            isFromCloud = true,
-        )
+    private fun ProductDto.toItem(): Item = Item(
+        id = REMOTE_ID_BASE + id,
+        // 列表标题中文化：按品相 + 品类生成自然的二手标题，
+        // 云端原始英文标题收进详情页，界面保持校园二手的中文语境
+        title = "${cloudCondition(id.toLong())}${mapNoun(category)}",
+        // dummyjson 价格为美元，按 1:7 折算为人民币参考价
+        price = (price * 7).roundToInt().toDouble(),
+        // 详情页再拼上"数据源原文"前缀，卡片列表不显示英文
+        description = description,
+        category = mapCategory(category),
+        sellerName = "☁ 云端自营",
+        publishTime = "今日同步",
+        trustTags = listOf("本校学生认证", "云端数据源"),
+        imageUrl = thumbnail ?: images?.firstOrNull() ?: "",
+        isFromCloud = true,
+    )
+
+    /** 品相描述词（按 id 轮换，让标题不千篇一律） */
+    private val CLOUD_CONDITIONS =
+        listOf("九成新", "几乎全新", "低价转", "仅用一学期", "毕业甩卖", "宿舍闲置")
+
+    private fun cloudCondition(id: Long): String =
+        CLOUD_CONDITIONS[((id % CLOUD_CONDITIONS.size).toInt())]
+
+    /**
+     * 云端英文分类 -> 具体中文品类词（比六个大分类更细，标题更像真实的二手商品）
+     */
+    private fun mapNoun(raw: String): String = when (raw) {
+        "smartphones" -> "智能手机"
+        "tablets" -> "平板电脑"
+        "laptops" -> "笔记本电脑"
+        "mobile-accessories" -> "数码配件"
+        "kitchen-accessories" -> "厨房小电器"
+        "home-decoration" -> "家居小物"
+        "beauty" -> "美妆用品"
+        "fragrances" -> "香水"
+        "skin-care" -> "护肤用品"
+        "sports-accessories" -> "运动用品"
+        "groceries" -> "零食日用"
+        "mens-shirts", "tops" -> "上衣"
+        "womens-dresses" -> "连衣裙"
+        "womens-bags" -> "包包"
+        "mens-shoes", "womens-shoes" -> "鞋"
+        "mens-watches", "womens-watches" -> "手表"
+        "sunglasses" -> "墨镜"
+        "womens-jewellery" -> "首饰"
+        else -> "闲置好物"
     }
 
     /** 云端分类映射到本 App 的六个分类 */

@@ -19,8 +19,8 @@ import java.io.File
  */
 object ItemCache {
 
-    // v3：扩大云端拉取范围（100 条取 60），旧缓存作废重新拉取
-    private const val FILE_NAME = "cached_products_v3.json"
+    // v4：云端商品标题改为"品相+品类"自然命名，旧缓存作废重新拉取
+    private const val FILE_NAME = "cached_products_v4.json"
     private val gson = Gson()
 
     private fun cacheFile(context: Context): File =

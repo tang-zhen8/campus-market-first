@@ -9,6 +9,7 @@ import com.bumptech.glide.Glide
 import com.tangzhen.campusmarket.R
 import com.tangzhen.campusmarket.databinding.ItemProductBinding
 import com.tangzhen.campusmarket.model.Item
+import com.tangzhen.campusmarket.utils.ItemImages
 import java.util.Locale
 
 /**
@@ -40,7 +41,9 @@ class ItemAdapter(
         fun bind(item: Item, onItemClick: (Item) -> Unit) {
             binding.tvTitle.text = item.title
             binding.tvPrice.text = String.format(Locale.CHINA, "¥%.2f", item.price)
-            binding.tvDescription.text = item.description
+            // 云端商品卡片只显示中文提示，英文原文收进详情页
+            binding.tvDescription.text =
+                if (item.isFromCloud) "商品描述来自云端数据源，点击查看原文" else item.description
             binding.tvCategory.text = item.category
             // 创新点二：校园信任标签
             binding.tvTrust.text = item.trustTags.joinToString(" · ")
@@ -51,10 +54,10 @@ class ItemAdapter(
             binding.ivStar.visibility = if (item.isStarred) android.view.View.VISIBLE else android.view.View.INVISIBLE
 
             // 强制技术点「图片处理 + 网络」：
-            // 云端商品的图片通过 Glide 发起 HTTP 请求下载，
-            // 自带磁盘/内存缓存，滑动列表时不重复请求
+            // 云端商品：imageUrl 走 Glide 的 HTTP 网络下载（自带磁盘/内存缓存）
+            // 本地商品：无图源，使用柔和的分类示意图，避免出现灰底占位框
             Glide.with(binding.ivThumb)
-                .load(item.imageUrl.ifEmpty { null })
+                .load(item.imageUrl.ifBlank { ItemImages.resFor(item) })
                 .placeholder(R.drawable.bg_image_placeholder)
                 .error(R.drawable.bg_image_placeholder)
                 .centerCrop()
