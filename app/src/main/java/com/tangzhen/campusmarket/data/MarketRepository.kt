@@ -207,7 +207,8 @@ object MarketRepository {
             return
         }
 
-        ApiClient.marketApi.getProducts(100).enqueue(object : Callback<ProductListResponse> {
+        // limit=0 表示拉取云端全部商品，再由白名单 + 价格上限过滤出校园闲置
+        ApiClient.marketApi.getProducts(0).enqueue(object : Callback<ProductListResponse> {
             override fun onResponse(
                 call: Call<ProductListResponse>,
                 response: Response<ProductListResponse>
@@ -215,8 +216,8 @@ object MarketRepository {
                 val products = response.body()?.products.orEmpty()
                 val suitable = products
                     .filter { it.category in CAMPUS_CATEGORIES }
-                    // 校园二手不会出现天价商品（奢侈品名表等），折算后超 2 万的直接丢弃
-                    .filter { it.price * 7 <= MAX_CLOUD_PRICE_CNY }
+                    // 二手折价后再卡上限：学生转让的东西很少有超过几百块的
+                    .filter { it.price * RATE_USD_CNY * USED_DISCOUNT <= MAX_CLOUD_PRICE_CNY }
                     .take(60)
                 if (response.isSuccessful && suitable.isNotEmpty()) {
                     ItemCache.save(ctx, suitable)
@@ -233,13 +234,27 @@ object MarketRepository {
         })
     }
 
-    /** 云端商品折算成人民币后的价格上限（校园二手场景的价格合理范围） */
-    private const val MAX_CLOUD_PRICE_CNY = 20000.0
+    /** 云端商品美元 -> 人民币汇率参考 */
+    private const val RATE_USD_CNY = 7.0
+
+    /**
+     * 二手折价系数：学生转让的都是自用闲置，一般按原价五~六折出。
+     * 用它算出来的价格既比原价便宜（符合二手逻辑），又能让贵的原价商品
+     * 自然落到学生消费得起的价格区间。
+     */
+    private const val USED_DISCOUNT = 0.6
+
+    /**
+     * 云端商品折算成人民币后的价格上限（校园二手的价格合理范围）：
+     * 超过 600 元的东西学生基本不会在校内二手群卖，直接丢弃。
+     */
+    private const val MAX_CLOUD_PRICE_CNY = 600.0
 
     /**
      * 云端品类白名单：只保留学生真正会交易的品类。
      * 数据源是通用电商演示库，直接照搬会出现化妆品、香水、生鲜肉、
-     * 床、摩托车等不符合校园二手场景的数据——白名单是最彻底的清洗方式。
+     * 床、摩托车、名表、首饰等不符合校园二手场景的数据——
+     * 白名单 + 价格上限双重过滤是最彻底的清洗方式。
      */
     private val CAMPUS_CATEGORIES = setOf(
         "smartphones", "tablets", "laptops", "mobile-accessories",  // 数码产品
@@ -247,8 +262,7 @@ object MarketRepository {
         "sunglasses",                                               // 数码配件（墨镜）
         "mens-shirts", "tops", "womens-dresses",                    // 衣物用品
         "mens-shoes", "womens-shoes",                               // 鞋
-        "mens-watches", "womens-watches",                           // 手表
-        "womens-bags", "womens-jewellery",                          // 包包 / 首饰
+        "womens-bags",                                              // 包包
     )
 
     /** 用云端商品替换列表里的旧云端数据（保留用户对它们的收藏 / 盯盘 / 留言状态） */
@@ -282,8 +296,9 @@ object MarketRepository {
         // 列表标题中文化：按品相 + 品类生成自然的二手标题，
         // 云端原始英文标题收进详情页，界面保持校园二手的中文语境
         title = "${cloudCondition(id.toLong())}${mapNoun(category)}",
-        // dummyjson 价格为美元，按 1:7 折算为人民币参考价
-        price = (price * 7).roundToInt().toDouble(),
+        // dummyjson 价格为美元：按汇率折算后，再按"二手闲置"打六折，
+        // 得到贴近校园实际的学生转让价
+        price = (price * RATE_USD_CNY * USED_DISCOUNT).roundToInt().toDouble(),
         // 详情页再拼上"数据源原文"前缀，卡片列表不显示英文
         description = description,
         category = mapCategory(category),
@@ -319,7 +334,7 @@ object MarketRepository {
         "mens-shirts", "tops" -> "上衣"
         "womens-dresses" -> "连衣裙"
         "womens-bags" -> "包包"
-        "mens-shoes", "womens-shoes" -> "鞋"
+        "mens-shoes", "womens-shoes" -> "运动鞋"
         "mens-watches", "womens-watches" -> "手表"
         "sunglasses" -> "墨镜"
         "womens-jewellery" -> "首饰"
@@ -331,7 +346,8 @@ object MarketRepository {
         "smartphones", "mobile-accessories", "laptops", "tablets" -> "数码产品"
         "furniture", "home-decoration", "kitchen-accessories" -> "生活电器"
         "sports-accessories", "motorcycle", "vehicle" -> "运动器材"
-        "tops", "mens-shirts", "womens-dresses", "womens-bags", "womens-jewellery" -> "衣物用品"
+        "mens-shirts", "tops", "womens-dresses", "womens-bags",
+        "mens-shoes", "womens-shoes", "sunglasses" -> "衣物用品"
         else -> "其他"
     }
 
