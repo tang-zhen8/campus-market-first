@@ -293,9 +293,9 @@ object MarketRepository {
     /** DTO -> Item：外部数据结构转换为 App 内部模型（解耦：换接口只改这里） */
     private fun ProductDto.toItem(): Item = Item(
         id = REMOTE_ID_BASE + id,
-        // 列表标题中文化：从具体商品名库中按 id 取名（品名 + 型号/细节），
-        // 命名风格与内置商品一致，避免"九成新鞋"这类一眼假的名字
-        title = cloudTitle(category, id.toLong()),
+        // 列表标题中文化：优先按云端原始标题精确翻译，保证名字和配图一致；
+        // 标题不在映射表里时退回品类名库
+        title = CLOUD_TITLE_MAP[this.title.trim()] ?: cloudTitle(category, id.toLong()),
         // dummyjson 价格为美元：按汇率折算后，再按"二手闲置"打六折，
         // 得到贴近校园实际的学生转让价
         price = (price * RATE_USD_CNY * USED_DISCOUNT).roundToInt().toDouble(),
@@ -358,6 +358,82 @@ object MarketRepository {
     )
 
     private const val FALLBACK_TITLE = "闲置好物"
+
+    /**
+     * 云端英文标题 -> 中文商品名（精确映射）
+     *
+     * 为什么按标题映射而不是按品类套模板？因为配图是数据源自带的实拍图，
+     * 只有名字跟着标题翻译，图片和名字才能对得上（AirPods 的图就叫"蓝牙耳机"，
+     * Nike 的钉鞋就叫"Nike 棒球钉鞋"），否则会出现"手机支架"配一张耳机图的怪现象。
+     */
+    private val CLOUD_TITLE_MAP: Map<String, String> = mapOf(
+        // 数码配件（图是充电器 / 音箱 / 耳机实物）
+        "Apple Airpods" to "Apple AirPods 蓝牙耳机",
+        "Beats Flex Wireless Earphones" to "Beats Flex 无线耳机",
+        "Apple iPhone Charger" to "iPhone 原装充电器",
+        "Apple Airpower Wireless Charger" to "Apple 无线充电板",
+        "Apple MagSafe Battery Pack" to "MagSafe 磁吸充电宝",
+        "Amazon Echo Plus" to "Amazon Echo Plus 智能音箱",
+        "Apple HomePod Mini Cosmic Grey" to "HomePod mini 智能音箱 深空灰",
+        "iPhone 12 Silicone Case with MagSafe Plum" to "iPhone 12 硅胶保护壳 梅子色",
+        "Selfie Stick Monopod" to "自拍杆 伸缩款",
+        "Monopod" to "相机独脚架",
+        "Selfie Lamp with iPhone" to "手机补光灯 自拍款",
+        // 运动器材
+        "Basketball" to "篮球 7号 室内外通用",
+        "Football" to "足球 5号 训练款",
+        "Volleyball" to "排球 5号 软式",
+        "Baseball Ball" to "棒球 硬式",
+        "Baseball Glove" to "棒球手套 右手款",
+        "Metal Baseball Bat" to "金属棒球棒 铝合金",
+        "Basketball Rim" to "篮球框 壁挂式",
+        "American Football" to "美式橄榄球",
+        "Cricket Ball" to "板球 训练用",
+        "Cricket Bat" to "板球拍 木质",
+        "Cricket Helmet" to "板球头盔",
+        "Cricket Wicket" to "板球三柱门",
+        "Feather Shuttlecock" to "羽毛球 一筒12只装",
+        "Tennis Ball" to "网球 训练球",
+        "Tennis Racket" to "网球拍 初学款",
+        "Golf Ball" to "高尔夫球 一盒装",
+        "Iron Golf" to "高尔夫铁杆",
+        // 鞋
+        "Nike Baseball Cleats" to "Nike 棒球钉鞋",
+        "Puma Future Rider Trainers" to "Puma Future Rider 复古跑鞋",
+        "Sports Sneakers Off White & Red" to "运动板鞋 米白拼红",
+        "Sports Sneakers Off White Red" to "运动板鞋 米白红",
+        "Black & Brown Slipper" to "黑棕拼色拖鞋",
+        "Calvin Klein Heel Shoes" to "Calvin Klein 高跟鞋",
+        "Golden Shoes Woman" to "金色女士单鞋",
+        "Pampi Shoes" to "Pampi 女士单鞋",
+        "Red Shoes" to "红色女士单鞋",
+        // 衣 / 裙
+        "Blue & Black Check Shirt" to "蓝黑格纹衬衫",
+        "Men Check Shirt" to "男士格子衬衫",
+        "Man Plaid Shirt" to "男士格纹衬衫",
+        "Man Short Sleeve Shirt" to "男士短袖衬衫",
+        "Gigabyte Aorus Men Tshirt" to "技嘉 Aorus 纪念T恤",
+        "Blue Frock" to "蓝色连衣裙",
+        "Girl Summer Dress" to "夏日少女连衣裙",
+        "Gray Dress" to "灰色连衣裙",
+        "Short Frock" to "短款连衣裙",
+        "Tartan Dress" to "格纹连衣裙",
+        "Black Women's Gown" to "黑色长礼服裙",
+        "Corset Leather With Skirt" to "皮质束身上衣 配半裙",
+        "Corset With Black Skirt" to "束身上衣 配黑裙",
+        "Dress Pea" to "豌豆印花连衣裙",
+        // 包
+        "Blue Women's Handbag" to "蓝色女士手提包",
+        "Women Handbag Black" to "黑色女士手提包",
+        "Heshe Women's Leather Bag" to "Heshe 真皮女包",
+        "White Faux Leather Backpack" to "白色 PU 双肩包",
+        // 墨镜
+        "Black Sun Glasses" to "黑框太阳镜",
+        "Classic Sun Glasses" to "经典款太阳镜",
+        "Green and Black Glasses" to "绿黑拼色墨镜",
+        "Party Glasses" to "派对装饰眼镜",
+        "Sunglasses" to "墨镜 黑框百搭",
+    )
 
     /** 按品类 + id 取一个具体的二手商品名（同一商品名字永远稳定） */
     private fun cloudTitle(category: String, id: Long): String {
