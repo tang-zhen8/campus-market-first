@@ -41,9 +41,7 @@ class ItemAdapter(
         fun bind(item: Item, onItemClick: (Item) -> Unit) {
             binding.tvTitle.text = item.title
             binding.tvPrice.text = String.format(Locale.CHINA, "¥%.2f", item.price)
-            // 云端商品卡片只显示中文提示，英文原文收进详情页
-            binding.tvDescription.text =
-                if (item.isFromCloud) "商品描述来自云端数据源，点击查看原文" else item.description
+            binding.tvDescription.text = item.description
             binding.tvCategory.text = item.category
             // 创新点二：校园信任标签
             binding.tvTrust.text = item.trustTags.joinToString(" · ")

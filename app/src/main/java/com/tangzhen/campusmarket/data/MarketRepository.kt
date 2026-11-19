@@ -293,52 +293,76 @@ object MarketRepository {
     /** DTO -> Item：外部数据结构转换为 App 内部模型（解耦：换接口只改这里） */
     private fun ProductDto.toItem(): Item = Item(
         id = REMOTE_ID_BASE + id,
-        // 列表标题中文化：按品相 + 品类生成自然的二手标题，
-        // 云端原始英文标题收进详情页，界面保持校园二手的中文语境
-        title = "${cloudCondition(id.toLong())}${mapNoun(category)}",
+        // 列表标题中文化：从具体商品名库中按 id 取名（品名 + 型号/细节），
+        // 命名风格与内置商品一致，避免"九成新鞋"这类一眼假的名字
+        title = cloudTitle(category, id.toLong()),
         // dummyjson 价格为美元：按汇率折算后，再按"二手闲置"打六折，
         // 得到贴近校园实际的学生转让价
         price = (price * RATE_USD_CNY * USED_DISCOUNT).roundToInt().toDouble(),
-        // 详情页再拼上"数据源原文"前缀，卡片列表不显示英文
-        description = description,
+        // 描述按学生发二手帖的口吻生成，详情页仍可查看云端数据源原文
+        description = "自用闲置转让，${cloudCondition(id.toLong())}，校内可当面交易，" +
+            "可送到宿舍楼下，可小刀，介意勿拍。",
         category = mapCategory(category),
-        sellerName = "☁ 云端自营",
-        publishTime = "今日同步",
-        trustTags = listOf("本校学生认证", "云端数据源"),
+        sellerName = "李同学",
+        publishTime = now(),
+        trustTags = listOf("本校学生认证", "支持当面验货"),
         imageUrl = thumbnail ?: images?.firstOrNull() ?: "",
         isFromCloud = true,
     )
 
-    /** 品相描述词（按 id 轮换，让标题不千篇一律） */
+    /** 品相描述词（按 id 轮换，用在描述里，让每条文案不完全一样） */
     private val CLOUD_CONDITIONS =
-        listOf("九成新", "几乎全新", "低价转", "仅用一学期", "毕业甩卖", "宿舍闲置")
+        listOf("九成新", "几乎全新", "仅用一学期", "轻度使用痕迹", "成色不错", "功能完好")
 
     private fun cloudCondition(id: Long): String =
         CLOUD_CONDITIONS[((id % CLOUD_CONDITIONS.size).toInt())]
 
     /**
-     * 云端英文分类 -> 具体中文品类词（比六个大分类更细，标题更像真实的二手商品）
+     * 云端商品的具体商品名库：模仿学生真实发帖的命名（品名 + 型号/细节），
+     * 按 id 轮换取名，保证同一个商品每次刷新名字稳定不变。
      */
-    private fun mapNoun(raw: String): String = when (raw) {
-        "smartphones" -> "智能手机"
-        "tablets" -> "平板电脑"
-        "laptops" -> "笔记本电脑"
-        "mobile-accessories" -> "数码配件"
-        "kitchen-accessories" -> "厨房小电器"
-        "home-decoration" -> "家居小物"
-        "beauty" -> "美妆用品"
-        "fragrances" -> "香水"
-        "skin-care" -> "护肤用品"
-        "sports-accessories" -> "运动用品"
-        "groceries" -> "零食日用"
-        "mens-shirts", "tops" -> "上衣"
-        "womens-dresses" -> "连衣裙"
-        "womens-bags" -> "包包"
-        "mens-shoes", "womens-shoes" -> "运动鞋"
-        "mens-watches", "womens-watches" -> "手表"
-        "sunglasses" -> "墨镜"
-        "womens-jewellery" -> "首饰"
-        else -> "闲置好物"
+    private val CLOUD_TITLES: Map<String, List<String>> = mapOf(
+        "mobile-accessories" to listOf(
+            "蓝牙耳机 半入耳式", "充电宝 2万毫安快充", "机械键盘 87键红轴", "无线游戏鼠标",
+            "手机支架 桌面折叠", "迷你蓝牙音箱", "Type-C 有线耳机", "三合一数据线",
+            "智能手环 运动计步款", "手机壳 硅胶防摔", "桌面小台灯 USB充电", "车充 双口快充",
+        ),
+        "sports-accessories" to listOf(
+            "篮球 7号 室内外通用", "足球 5号 训练款", "羽毛球拍 单拍送手胶", "乒乓球拍 双拍套装",
+            "计数跳绳", "加厚瑜伽垫", "运动护膝", "棒球手套", "握力器", "臂力棒",
+            "羽毛球一筒 12只装", "网球拍 初学款", "篮球包 大容量", "排球 5号软式",
+        ),
+        "mens-shirts" to listOf(
+            "纯棉白T恤 基础款", "长袖格子衬衫", "polo衫 休闲款", "加绒连帽卫衣",
+            "水洗牛仔衬衫", "针织开衫 纯色",
+        ),
+        "tops" to listOf(
+            "圆领卫衣 宽松版", "印花短袖 情侣款", "套头毛衣", "纯色长袖T恤",
+            "连帽衫 宽松款", "衬衫 条纹款",
+        ),
+        "womens-dresses" to listOf(
+            "碎花连衣裙", "针织长裙", "白衬衫裙", "长袖收腰连衣裙", "小个子连衣裙",
+        ),
+        "mens-shoes" to listOf(
+            "帆布鞋 低帮", "休闲板鞋", "轻便跑鞋", "小白鞋 百搭款", "实战篮球鞋", "训练鞋 透气款",
+        ),
+        "womens-shoes" to listOf(
+            "厚底小白鞋", "粉色帆布鞋", "运动跑鞋", "复古乐福鞋", "百搭板鞋",
+        ),
+        "womens-bags" to listOf(
+            "双肩包 书包款", "托特包 大容量", "单肩小方包", "帆布斜挎包", "手提通勤包",
+        ),
+        "sunglasses" to listOf(
+            "偏光墨镜 骑行款", "圆框太阳镜", "黑框墨镜 百搭", "金丝细框眼镜",
+        ),
+    )
+
+    private const val FALLBACK_TITLE = "闲置好物"
+
+    /** 按品类 + id 取一个具体的二手商品名（同一商品名字永远稳定） */
+    private fun cloudTitle(category: String, id: Long): String {
+        val pool = CLOUD_TITLES[category] ?: return FALLBACK_TITLE
+        return pool[(id % pool.size).toInt()]
     }
 
     /** 云端分类映射到本 App 的六个分类 */

@@ -71,9 +71,7 @@ class ItemDetailActivity : AppCompatActivity() {
         binding.tvTrust.text = item.trustTags.joinToString(" · ")
         binding.tvSeller.text = "卖家：${item.sellerName}"
         binding.tvTime.text = "发布时间：${item.publishTime}"
-        binding.tvDescription.text =
-            if (item.isFromCloud) "该商品来自云端商品库，以下为数据源原文描述：\n${item.description}"
-            else item.description
+        binding.tvDescription.text = item.description
 
         // 强制技术点「图片处理」：云端商品用 Glide 发起网络请求加载大图，
         // 并复用列表页已缓存的图片（同一 URL 不会重复下载）；
