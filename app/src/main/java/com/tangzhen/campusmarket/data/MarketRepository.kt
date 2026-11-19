@@ -214,7 +214,9 @@ object MarketRepository {
             ) {
                 val products = response.body()?.products.orEmpty()
                 val suitable = products
-                    .filter { it.category !in EXCLUDED_CATEGORIES }
+                    .filter { it.category in CAMPUS_CATEGORIES }
+                    // 校园二手不会出现天价商品（奢侈品名表等），折算后超 2 万的直接丢弃
+                    .filter { it.price * 7 <= MAX_CLOUD_PRICE_CNY }
                     .take(60)
                 if (response.isSuccessful && suitable.isNotEmpty()) {
                     ItemCache.save(ctx, suitable)
@@ -231,11 +233,23 @@ object MarketRepository {
         })
     }
 
+    /** 云端商品折算成人民币后的价格上限（校园二手场景的价格合理范围） */
+    private const val MAX_CLOUD_PRICE_CNY = 20000.0
+
     /**
-     * 不符合校园二手场景的品类，从云端结果中过滤：
-     * 家具（宿舍放不下床/沙发）、整车（摩托/汽车不属于校园交易）
+     * 云端品类白名单：只保留学生真正会交易的品类。
+     * 数据源是通用电商演示库，直接照搬会出现化妆品、香水、生鲜肉、
+     * 床、摩托车等不符合校园二手场景的数据——白名单是最彻底的清洗方式。
      */
-    private val EXCLUDED_CATEGORIES = setOf("furniture", "vehicle", "motorcycle")
+    private val CAMPUS_CATEGORIES = setOf(
+        "smartphones", "tablets", "laptops", "mobile-accessories",  // 数码产品
+        "sports-accessories",                                       // 运动器材
+        "sunglasses",                                               // 数码配件（墨镜）
+        "mens-shirts", "tops", "womens-dresses",                    // 衣物用品
+        "mens-shoes", "womens-shoes",                               // 鞋
+        "mens-watches", "womens-watches",                           // 手表
+        "womens-bags", "womens-jewellery",                          // 包包 / 首饰
+    )
 
     /** 用云端商品替换列表里的旧云端数据（保留用户对它们的收藏 / 盯盘 / 留言状态） */
     private fun replaceRemoteItems(products: List<ProductDto>) {
