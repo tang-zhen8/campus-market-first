@@ -26,6 +26,10 @@
             android:name=".ui.detail.ItemDetailActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.home.CategoryActivity"
+            android:exported="false" />
+
         <!-- 伴生模块 P1：桌面「盯盘」小组件 -->
         <receiver
             android:name=".widget.StarredWidgetProvider"
