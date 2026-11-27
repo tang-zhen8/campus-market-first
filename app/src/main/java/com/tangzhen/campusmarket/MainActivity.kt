@@ -1,7 +1,12 @@
 package com.tangzhen.campusmarket
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.tangzhen.campusmarket.data.MarketRepository
@@ -27,12 +32,28 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
+    /** 强制技术点「权限」：Android 13+ 通知需要运行时授权（盯盘降价提醒用） */
+    private val requestNotification =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                Toast.makeText(this, "降价提醒已开启，盯盘降价会通知你", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
+
+        // 请求通知权限（降价提醒创新点依赖；未授权时通知静默跳过）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestNotification.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
 
         // 1. 初始化数据层：先读取云端商品的本地离线缓存（断网也能浏览）
         MarketRepository.init(applicationContext)

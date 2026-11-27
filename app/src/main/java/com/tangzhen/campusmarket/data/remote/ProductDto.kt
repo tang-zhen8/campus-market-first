@@ -24,5 +24,11 @@ data class ProductDto(
     @SerializedName("images") val images: List<String>? = null,
     @SerializedName("brand") val brand: String? = null,
     @SerializedName("stock") val stock: Int = 0,
-    @SerializedName("rating") val rating: Double = 0.0
+    @SerializedName("rating") val rating: Double = 0.0,
+
+    // ── 以下字段不在云端 JSON 中，由 App 本地维护（缓存时一并持久化）──
+    /** 降价系数：模拟市场行情，降价一旦发生就保留（1.0 = 原价） */
+    var discount: Double = 1.0,
+    /** 本次同步是否发生了降价（驱动降价通知与小组件角标） */
+    var justDropped: Boolean = false
 )

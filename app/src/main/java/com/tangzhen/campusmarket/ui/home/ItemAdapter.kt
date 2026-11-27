@@ -43,6 +43,26 @@ class ItemAdapter(
             binding.tvPrice.text = String.format(Locale.CHINA, "¥%.2f", item.price)
             binding.tvDescription.text = item.description
             binding.tvCategory.text = item.category
+            // 创新点四：求购 / 交换角标（出售是默认类型不显示）
+            when (item.dealType) {
+                "求购" -> {
+                    binding.tvDeal.visibility = android.view.View.VISIBLE
+                    binding.tvDeal.text = "求购"
+                    binding.tvDeal.setBackgroundResource(R.drawable.bg_deal_buy)
+                    binding.tvDeal.setTextColor(
+                        binding.root.context.getColor(R.color.deal_buy_text)
+                    )
+                }
+                "交换" -> {
+                    binding.tvDeal.visibility = android.view.View.VISIBLE
+                    binding.tvDeal.text = "交换"
+                    binding.tvDeal.setBackgroundResource(R.drawable.bg_deal_swap)
+                    binding.tvDeal.setTextColor(
+                        binding.root.context.getColor(R.color.deal_swap_text)
+                    )
+                }
+                else -> binding.tvDeal.visibility = android.view.View.GONE
+            }
             // 创新点二：校园信任标签
             binding.tvTrust.text = item.trustTags.joinToString(" · ")
             binding.tvSeller.text = "${item.sellerName} · ${item.publishTime}"

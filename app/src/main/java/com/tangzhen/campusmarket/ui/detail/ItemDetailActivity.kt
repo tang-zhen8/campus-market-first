@@ -73,6 +73,18 @@ class ItemDetailActivity : AppCompatActivity() {
         binding.tvTime.text = "发布时间：${item.publishTime}"
         binding.tvDescription.text = item.description
 
+        // 创新点四：交易类型 + 交易地点（求购时价格含义是预算）
+        val dealInfo = buildString {
+            if (item.dealType != "出售") append("交易类型：${item.dealType}")
+            if (item.location.isNotBlank()) {
+                if (isNotEmpty()) append("  ·  ")
+                append("交易地点：${item.location}")
+            }
+        }
+        binding.tvDealLocation.text = dealInfo
+        binding.tvDealLocation.visibility =
+            if (dealInfo.isEmpty()) View.GONE else View.VISIBLE
+
         // 强制技术点「图片处理」：云端商品用 Glide 发起网络请求加载大图，
         // 并复用列表页已缓存的图片（同一 URL 不会重复下载）；
         // 本地商品使用分类示意图

@@ -69,6 +69,8 @@ class StarredWidgetProvider : AppWidgetProvider() {
                     JSONObject().apply {
                         put("title", item.title)
                         put("price", item.price)
+                        // 创新点：降价角标（盯盘商品降价后价格旁显示红色 ↓）
+                        put("dropped", item.priceDropped)
                     }
                 )
             }
@@ -97,15 +99,16 @@ class StarredWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        /** 读取快照：返回 (标题, 价格) 列表 */
-        private fun readSnapshot(context: Context): List<Pair<String, String>> {
+        /** 读取快照：返回 (标题, 价格文本, 是否降价) 列表 */
+        private fun readSnapshot(context: Context): List<Triple<String, String, Boolean>> {
             val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .getString(KEY_SNAPSHOT, null) ?: return emptyList()
             return try {
                 val array = JSONArray(raw)
                 (0 until array.length()).map { i ->
                     val obj = array.getJSONObject(i)
-                    obj.getString("title") to String.format(Locale.CHINA, "¥%.2f", obj.getDouble("price"))
+                    val price = String.format(Locale.CHINA, "¥%.2f", obj.getDouble("price"))
+                    Triple(obj.getString("title"), price, obj.optBoolean("dropped", false))
                 }
             } catch (e: Exception) {
                 emptyList()
@@ -151,7 +154,14 @@ class StarredWidgetProvider : AppWidgetProvider() {
                 } else {
                     views.setViewVisibility(rowId, View.VISIBLE)
                     views.setTextViewText(titleId, entry.first)
-                    views.setTextViewText(priceId, entry.second)
+                    // 创新点：降价商品价格显示为红色 ↓，一眼看到捡漏机会
+                    if (entry.third) {
+                        views.setTextViewText(priceId, entry.second + " ↓")
+                        views.setTextColor(priceId, context.getColor(R.color.price_drop))
+                    } else {
+                        views.setTextViewText(priceId, entry.second)
+                        views.setTextColor(priceId, context.getColor(R.color.text_secondary))
+                    }
                 }
             }
 

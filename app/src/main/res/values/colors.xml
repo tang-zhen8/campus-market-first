@@ -29,4 +29,13 @@
 
     <!-- 盯盘图标色 -->
     <color name="pin">#4C89BE</color>
+
+    <!-- 降价提醒（创新点五）：柔和的红，不刺眼 -->
+    <color name="price_drop">#C9736E</color>
+
+    <!-- 求购/交换角标（创新点四） -->
+    <color name="deal_buy_bg">#E4F1FB</color>
+    <color name="deal_buy_text">#3E7EA8</color>
+    <color name="deal_swap_bg">#E6F4EA</color>
+    <color name="deal_swap_text">#2E7D46</color>
 </resources>

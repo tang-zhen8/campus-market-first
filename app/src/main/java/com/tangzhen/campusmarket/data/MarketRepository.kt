@@ -9,6 +9,7 @@ import com.tangzhen.campusmarket.data.remote.ProductListResponse
 import com.tangzhen.campusmarket.model.Comment
 import com.tangzhen.campusmarket.model.Item
 import com.tangzhen.campusmarket.utils.NetUtils
+import com.tangzhen.campusmarket.utils.PriceAlertNotifier
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -73,6 +74,21 @@ object MarketRepository {
             category = "其他", sellerName = "赵同学", publishTime = "11-05 12:00",
             trustTags = listOf("本校学生认证", "同栋宿舍楼", "支持当面验货"),
         ),
+        // 创新点四：求购 / 交换（校园特色交易模式）
+        Item(
+            id = 7, title = "求购 二手篮球（七号球 100 元内）",
+            price = 60.0, description = "想入一个二手七号球平时打室内，成色好一点就行，价格可谈。",
+            category = "运动器材", sellerName = "唐珍", publishTime = "11-26 19:30",
+            dealType = "求购", location = "宿舍楼下",
+            trustTags = listOf("本校学生认证"),
+        ),
+        Item(
+            id = 8, title = "高数手写笔记 换 CET-4 真题",
+            price = 10.0, description = "学长整理的高数上下册手写笔记（附错题本），想换一本四级真题，有意的留言。",
+            category = "教材书籍", sellerName = "唐珍", publishTime = "11-26 20:15",
+            dealType = "交换", location = "图书馆",
+            trustTags = listOf("本校学生认证", "同栋宿舍楼"),
+        ),
     )
 
     // 预置两条留言，演示效果
@@ -104,8 +120,15 @@ object MarketRepository {
 
     fun getItemById(id: Long): Item? = itemList.find { it.id == id }
 
-    /** 发布商品（发布页） */
-    fun addItem(title: String, price: Double, description: String, category: String) {
+    /** 发布商品（发布页）：支持交易类型（出售/求购/交换）与预设交易地点 */
+    fun addItem(
+        title: String,
+        price: Double,
+        description: String,
+        category: String,
+        dealType: String = "出售",
+        location: String = "",
+    ) {
         val item = Item(
             id = nextId++,
             title = title,
@@ -114,6 +137,8 @@ object MarketRepository {
             category = category,
             sellerName = currentUserName,
             publishTime = now(),
+            dealType = dealType,
+            location = location,
         )
         itemList.add(0, item)
         notifyChanged()
@@ -220,9 +245,14 @@ object MarketRepository {
                     .filter { it.price * RATE_USD_CNY * USED_DISCOUNT <= MAX_CLOUD_PRICE_CNY }
                     .take(60)
                 if (response.isSuccessful && suitable.isNotEmpty()) {
+                    // 创新点五：模拟市场行情——云端商品同步时可能降价，
+                    // 本地盯盘中的商品卖家也可能主动降价（只降一次）
+                    val drops = applyMarketFluctuation(suitable) + simulateLocalPriceDrops()
                     ItemCache.save(ctx, suitable)
                     replaceRemoteItems(suitable)
                     onResult(true, "云端同步成功，已获取 ${suitable.size} 件商品")
+                    // 盯盘中的商品降价了 → 系统通知提醒用户
+                    PriceAlertNotifier.notifyDrops(ctx, drops)
                 } else {
                     onResult(false, "云端返回异常（${response.code()}），已显示本地缓存")
                 }
@@ -232,6 +262,73 @@ object MarketRepository {
                 onResult(false, "网络请求失败（${t.javaClass.simpleName}），已显示本地缓存")
             }
         })
+    }
+
+    /** 降价信息（创新点五：盯盘降价提醒） */
+    data class PriceDrop(
+        val itemId: Long,
+        val title: String,
+        val oldPrice: Double,
+        val newPrice: Double,
+        val isStarred: Boolean,
+    )
+
+    /** 每次同步时单件商品发生降价的概率（模拟真实二手市场的价格波动） */
+    private const val DROP_PROBABILITY = 0.15
+
+    /**
+     * 模拟市场价格波动：每件商品以一定概率降价 8%~15%。
+     * 降价一旦发生就通过缓存保留下来（不会"回升"），
+     * 盯盘中的降价商品会触发系统通知 + 小组件降价角标。
+     */
+    private fun applyMarketFluctuation(products: List<ProductDto>): List<PriceDrop> {
+        val oldById = itemList.filter { it.isFromCloud }.associateBy { it.id }
+        val drops = mutableListOf<PriceDrop>()
+        products.forEach { dto ->
+            val old = oldById[REMOTE_ID_BASE + dto.id] ?: return@forEach
+            val basePrice = (dto.price * RATE_USD_CNY * USED_DISCOUNT).roundToInt().toDouble()
+            if (old.price < basePrice - 0.5) {
+                // 上次已经降价过：沿用低价，不再回升
+                dto.discount = old.price / basePrice
+            } else if (kotlin.random.Random.nextDouble() < DROP_PROBABILITY) {
+                val factor = 0.85 + kotlin.random.Random.nextDouble() * 0.10
+                dto.discount = factor
+                dto.justDropped = true
+                drops.add(
+                    PriceDrop(
+                        itemId = REMOTE_ID_BASE + dto.id,
+                        title = displayTitle(dto),
+                        oldPrice = old.price,
+                        newPrice = (basePrice * factor).roundToInt().toDouble(),
+                        isStarred = old.isStarred,
+                    )
+                )
+            }
+        }
+        return drops
+    }
+
+    /**
+     * 本地商品（内置示例 / 自己发布的）也可能"卖家主动降价"：
+     * 只对盯盘中的商品触发（概率 35%，每件最多降一次），
+     * 保证不盯盘的商品价格始终稳定。
+     */
+    private fun simulateLocalPriceDrops(): List<PriceDrop> {
+        val drops = mutableListOf<PriceDrop>()
+        itemList.filter { !it.isFromCloud && it.isStarred && !it.priceDropped && it.price > 1 }
+            .forEach { item ->
+                if (kotlin.random.Random.nextDouble() < 0.35) {
+                    val newPrice =
+                        (item.price * (0.85 + kotlin.random.Random.nextDouble() * 0.10))
+                            .roundToInt().toDouble()
+                    drops.add(
+                        PriceDrop(item.id, item.title, item.price, newPrice, isStarred = true)
+                    )
+                    item.price = newPrice
+                    item.priceDropped = true
+                }
+            }
+        return drops
     }
 
     /** 云端商品美元 -> 人民币汇率参考 */
@@ -278,6 +375,8 @@ object MarketRepository {
                 fresh.isStarred = old.isStarred
                 fresh.starredAt = old.starredAt
                 fresh.comments.addAll(old.comments)
+                // 降价标记持久：降过价的商品小组件上一直保留红色 ↓
+                fresh.priceDropped = old.priceDropped || dto.justDropped
             }
             fresh
         }
@@ -295,10 +394,9 @@ object MarketRepository {
         id = REMOTE_ID_BASE + id,
         // 列表标题中文化：优先按云端原始标题精确翻译，保证名字和配图一致；
         // 标题不在映射表里时退回品类名库
-        title = CLOUD_TITLE_MAP[this.title.trim()] ?: cloudTitle(category, id.toLong()),
-        // dummyjson 价格为美元：按汇率折算后，再按"二手闲置"打六折，
-        // 得到贴近校园实际的学生转让价
-        price = (price * RATE_USD_CNY * USED_DISCOUNT).roundToInt().toDouble(),
+        title = displayTitle(this),
+        // dummyjson 价格为美元：按汇率折算 → 二手折价 → 市场行情降价系数
+        price = (price * RATE_USD_CNY * USED_DISCOUNT * discount).roundToInt().toDouble(),
         // 描述按学生发二手帖的口吻生成，详情页仍可查看云端数据源原文
         description = "自用闲置转让，${cloudCondition(id.toLong())}，校内可当面交易，" +
             "可送到宿舍楼下，可小刀，介意勿拍。",
@@ -308,7 +406,12 @@ object MarketRepository {
         trustTags = listOf("本校学生认证", "支持当面验货"),
         imageUrl = thumbnail ?: images?.firstOrNull() ?: "",
         isFromCloud = true,
+        priceDropped = justDropped,
     )
+
+    /** 云端标题的中文显示名：精确映射优先，兜底品类名库 */
+    private fun displayTitle(dto: ProductDto): String =
+        CLOUD_TITLE_MAP[dto.title.trim()] ?: cloudTitle(dto.category, dto.id.toLong())
 
     /** 品相描述词（按 id 轮换，用在描述里，让每条文案不完全一样） */
     private val CLOUD_CONDITIONS =
@@ -453,4 +556,10 @@ object MarketRepository {
 
     // 分类常量（供发布页下拉框使用）
     val CATEGORIES = listOf("教材书籍", "数码产品", "生活电器", "运动器材", "衣物用品", "其他")
+
+    // 交易类型常量（创新点：校园特色交易模式）
+    val DEAL_TYPES = listOf("出售", "求购", "交换")
+
+    // 预设交易地点（发布时选择，方便校内当面交易）
+    val DEAL_LOCATIONS = listOf("不限", "宿舍楼下", "教学楼", "图书馆", "食堂", "操场", "校门口")
 }
